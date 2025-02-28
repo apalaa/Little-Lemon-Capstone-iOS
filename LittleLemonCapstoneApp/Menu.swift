@@ -17,13 +17,26 @@ struct Menu: View {
     
     var body: some View {
         VStack {
-            Text("Little Lemon App")
+            
+            // Header
+            HStack {
+                Group {
+                    Image(systemName: "leaf.fill")
+                    Text("Little Lemon App")
+                        .font(.title)
+                }
+                Image(systemName: "person.circle.fill")
+            }
+            
+            
             Text("Chicago")
             Text("This is an application to order from the Little Lemon restaurant.")
             
             TextField("Search Menu", text: $searchText)
             
-            FetchedObjects<Dish, List>(predicate: buildPredicate(searchText),sortDescriptors: buildSortDescriptors()) { (dishes: [Dish]) in
+            FetchedObjects<Dish, List>(
+                predicate: buildPredicate(searchText),
+                sortDescriptors: buildSortDescriptors()) { (dishes: [Dish]) in
                 List {
                     ForEach(dishes) { dish in
                         HStack {
@@ -40,12 +53,6 @@ struct Menu: View {
                     }
                 }
             }
-            
-            /*
-            List {
-                
-            }
-             */
         }
         .onAppear() {
             getMenuData(viewContext)
