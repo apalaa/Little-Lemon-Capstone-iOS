@@ -13,7 +13,7 @@ struct LittleLemonCapstoneAppApp: App {
 
     var body: some Scene {
         WindowGroup {
-            Onboarding()
+            Onboarding() 
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
         }
     }

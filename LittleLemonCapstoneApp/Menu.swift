@@ -8,51 +8,104 @@
 import SwiftUI
 import CoreData
 
+enum MenuCategories: String, CaseIterable {
+    case starters = "Starters"
+    case mains = "Mains"
+    case desserts = "Desserts"
+    case drinks = "Drinks"
+    
+}
 
 struct Menu: View {
     
     @Environment(\.managedObjectContext) private var viewContext
     
     @State private var searchText = ""
+    @State private var selectedCategory: MenuCategories? = nil
     
     var body: some View {
         VStack {
             
             // Header
-            HStack {
-                Group {
-                    Image(systemName: "leaf.fill")
-                    Text("Little Lemon App")
-                        .font(.title)
+            HeaderLittleLemon()
+            
+            VStack(spacing: 0) {
+                HeroLittleLemon()
+                HStack {
+                    Image(systemName: "magnifyingglass.circle.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 30, height: 30)
+                        .foregroundStyle(Color.white)
+                    TextField("", text: $searchText, prompt: Text("Search menu").foregroundStyle(Color.gray))
+                        .foregroundStyle(Color.white)
                 }
-                Image(systemName: "person.circle.fill")
+                .padding()
             }
+            .background(greenCustom)
             
             
-            Text("Chicago")
-            Text("This is an application to order from the Little Lemon restaurant.")
-            
-            TextField("Search Menu", text: $searchText)
-            
-            FetchedObjects<Dish, List>(
-                predicate: buildPredicate(searchText),
-                sortDescriptors: buildSortDescriptors()) { (dishes: [Dish]) in
-                List {
-                    ForEach(dishes) { dish in
+            VStack(alignment: .leading) {
+                HStack {
+                    Text("ORDER FOR DELIVERY!")
+                        .bold()
+                    Spacer()
+                }
+                HStack {
+                    ForEach(MenuCategories.allCases, id: \.self) { category in
+                        Button(action: {
+                            if selectedCategory == category {
+                                selectedCategory = nil
+                            } else {
+                                selectedCategory = category
+                            }
+                        }) {
+                            Text("\(category.rawValue)")
+                                .bold()
+                                .padding(.horizontal, 15)
+                                .padding(.vertical, 8)
+                                .background(selectedCategory == category ? greenCustom : greyCustom)
+                                .foregroundColor(selectedCategory == category ? .white : greenCustom)
+                                .clipShape(Capsule())
+                                .font(.system(size: 14))
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal)
+            .padding(.top, 10)
+
+            FetchedObjects<Dish, AnyView>(
+                predicate: buildPredicate(searchText, selectedCategory?.rawValue),
+                sortDescriptors: buildSortDescriptors()
+            ) { (dishes: [Dish]) in
+                AnyView(
+                    List(dishes) { dish in
                         HStack {
-                            Text(dish.title ?? "Unknown Dish")
-                            Text("$" + String(dish.price ?? "Unknown Price"))
+                            VStack(alignment: .leading) {
+                                Text(dish.title ?? "Unknown Dish")
+                                    .font(.title3)
+                                    .bold()
+                                Text(dish.itemDescription ?? "Unknown Dish")
+                                    .font(.caption)
+                                    .lineLimit(2)
+                                    .truncationMode(.tail)
+                                Text(dish.category ?? "Unknown Category")
+                                Text("$\(dish.price ?? "Unknown Price")")
+                            }
                             Spacer()
                             AsyncImage(url: URL(string: dish.image ?? "")) { image in
                                 image.resizable()
                             } placeholder: {
                                 ProgressView()
                             }
-                            .frame(width: 50, height: 50)
+                            .frame(width: 70, height: 70)
                         }
                     }
-                }
+                    .listStyle(.plain)
+                )
             }
+            
         }
         .onAppear() {
             getMenuData(viewContext)
@@ -76,7 +129,7 @@ func getMenuData(_ viewContext: NSManagedObjectContext) -> Void {
     
     let task = URLSession.shared.dataTask(with: urlRequest) { data, response, error in
         
-        PersistenceController.shared.clear()
+        
         
         if let error = error {
             print("ERROR FETCHING DATA: \(error.localizedDescription)")
@@ -95,6 +148,8 @@ func getMenuData(_ viewContext: NSManagedObjectContext) -> Void {
             print("Error decoding")
             return
         }
+        
+        PersistenceController.shared.clear()
         
         for menuItem in decodedData.menu {
             let dish = Dish(context: viewContext)
@@ -120,14 +175,23 @@ func buildSortDescriptors() -> [NSSortDescriptor] {
     
 }
 
-func buildPredicate(_ searchText: String) -> NSPredicate {
-    if searchText.isEmpty {
-        return NSPredicate(value: true)
-    } else {
-        return NSPredicate(format: "title CONTAINS[cd] %@", searchText)
+func buildPredicate(_ searchText: String, _ category: String?) -> NSPredicate {
+    
+    var predicates: [NSPredicate] = []
+    
+    if let category = category {
+        predicates.append(NSPredicate(format: "category contains [cd] %@", category))
     }
-}
+    
+    if !searchText.isEmpty {
+        predicates.append(NSPredicate(format: "title CONTAINS[cd] %@", searchText))
+    }
 
+
+    return predicates.isEmpty ? NSPredicate(value: true) : NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
+    
+    
+}
 
 #Preview {
     Menu()

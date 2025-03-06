@@ -12,8 +12,13 @@ let keyFirstName = "first name key"
 let keyLastName = "last name key"
 let keyEmail = "email key"
 let keyIsLoggedIn = "isLoggedIn key"
+let keyPhoneNum = "phone number key"
+
+
 
 struct Onboarding: View {
+    
+    
     
     @State var firstName: String = ""
     @State var lastName: String = ""
@@ -30,20 +35,41 @@ struct Onboarding: View {
         
         NavigationStack(path: $path) {
             VStack {
- 
-                TextField("First Name", text: $firstName)
-                TextField("Last Name", text: $lastName)
-                TextField("Email", text: $email)
                 
-                Button("Register") {
-                    handleRegistration()
+                HeaderLittleLemon()
+                HeroLittleLemon()
+
+                VStack(alignment: .leading) {
+                    Text("First Name *")
+                        .font(.caption)
+                        .foregroundStyle(.gray)
+                    TextField("First Name", text: $firstName)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                    Text("Last Name *")
+                        .font(.caption)
+                        .foregroundStyle(.gray)
+                    TextField("Last Name", text: $lastName)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                    Text("Email *")
+                        .font(.caption)
+                        .foregroundStyle(.gray)
+                    TextField("Email", text: $email)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
                 }
-                .alert("Please provide a valid \(missingField).", isPresented: $showFieldAlert, actions: {
-                    Button("OK", role: .cancel) { missingField = "" }
-                })
+                .padding()
+
+                Button("Register") { handleRegistration() }
+                    .alert(
+                        "Please provide a valid \(missingField).",
+                        isPresented: $showFieldAlert,
+                        actions: { Button("OK", role: .cancel) { missingField = "" }}
+                    )
+                
+                Spacer()
+                
             }
             .onAppear {
-                if (UserDefaults.standard.bool(forKey: "keyIsLoggedIn")) {
+                if (UserDefaults.standard.bool(forKey: keyIsLoggedIn)) {
                     path.append("home")
                 }
             }
